@@ -22,6 +22,15 @@ def integrate(input,step):
             output[i] = output[i-1] + 0.5*(input[i]+input[i-1])*step
     return output
 
+def vel_verlet(acc,dt):
+    vel = np.zeros_like(acc)
+    pos = np.zeros_like(acc)
+    for i in range(len(acc)-1):
+        vel_half_step = vel[i]+0.5*acc[i]*dt
+        pos[i+1] = pos[i]+vel_half_step*dt
+        vel[i+1] = vel_half_step+0.5*acc[i+1]*dt
+    return(vel)
+
 # This function determines absolute block velocity based on ground velocity and whether or not ground
 # acceleration is greater than critical acceleration.
 def blockVelocity(gVel,gAcc,aCrit,dt):
@@ -31,12 +40,14 @@ def blockVelocity(gVel,gAcc,aCrit,dt):
         tVel = bVel[i-1] + aCrit*dt # Temporary velocity value assuming the block is sliding with acceleration aCrit.
         if gAcc[i] > aCrit:
             blockSliding = True
-        elif tVel > gVel[i]: # Ends block sliding if block velocity matches ground velocity.
+        elif tVel >= gVel[i]: # Ends block sliding if block velocity matches ground velocity.
             blockSliding = False
+        else:
+           pass
         if blockSliding == True:
             bVel[i] = tVel
         else:
-            continue
+            pass
     return bVel
 
 # Plotting to examine output.
@@ -59,7 +70,8 @@ def downslopeAnalysis(tHist,aCrit):
     t = tHist[0,:]
     gAcc = tHist[1,:]
     dt = t[1]-t[0] # Time interval between samples (s).
-    gVel = integrate(gAcc,dt) # Determine ground velocity (gVel).
+    # gVel = integrate(gAcc,dt) # Determine ground velocity (gVel).
+    gVel = vel_verlet(gAcc,dt)
     bVel = blockVelocity(gVel,gAcc,aCrit,dt) # Determine block velocity (bVel)
 
     # Determine block accumulated displacement (bDisp) based on relative velocity (rVel).
