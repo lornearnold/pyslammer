@@ -88,7 +88,7 @@ def csv_time_hist(filename: str):
     return data
 
 
-def analytical_test(src_dir: str, write: bool=False, manual: bool=False):
+def analytical_test(src_dir: str, write: bool=False, manual: bool=False, method: str=None):
     # Open the harmonic solutions file and read the data.
     file = open(src_dir)
     if file is None:
@@ -145,7 +145,10 @@ def analytical_test(src_dir: str, write: bool=False, manual: bool=False):
             # displacement to the disp list. User to modify the next three lines as
             # needed to test the desired method.
             data = RigidBlock(time_history)
-            data.downslope_dgr(k_y[i])
+            if method == 'jibson':
+                data.downslope_jibson(k_y[i])
+            elif method == 'dgr':
+                data.downslope_dgr(k_y[i])
             disp.append(data.block_disp[-1])
 
         # Calculate the percent error between the analytical solution and the calculated.
@@ -171,7 +174,14 @@ def analytical_test(src_dir: str, write: bool=False, manual: bool=False):
     fig, ax = plt.subplots()
     for j in range(len(ky_analyzed)):
         ax.plot(data[0, :, j], data[1, :, j], markers[j], label='$\mathregular{k_y}$ = ' + str(ky_analyzed[j]))
-    ax.set_title('SLAMMER Analytical Solution Test')
+    if manual:
+        ax.set_title('SLAMMER Analytical Solution Test')
+    if method == 'jibson':
+        ax.set_title('Relative Acceleration Method Analytical Solution Test')
+    elif method == 'dgr':
+        ax.set_title('Relative Velocity Method Analytical Solution Test')
+    else:
+        pass
     ax.set_xlabel('Frequency (Hz)')
     ax.set_ylabel('Error (%)')
     ax.set_ylim(-0.7, 0.005)
@@ -258,18 +268,18 @@ def ground_motion_comp(slam_dir: str, data_dir: str):
 
     pass
 
-mpl.rcParams.update({'font.family': 'times new roman', 'font.size': 12})
 
-harmonic_solutions = "D:/Users/donal/Documents/Python/SlidingBlock/Records/Trimmed Data/harmonic_errors.csv"
+harmonic_solutions = "tests/Trimmed Data/harmonic_errors.csv"
+loma_prieta = csv_time_hist("tests/Trimmed Data/Loma_Prieta_1989_HSP-000.csv")
+
+mpl.rcParams.update({'font.family': 'times new roman', 'font.size': 12})
 analytical_test(harmonic_solutions, manual=True)
 
-# mpl.rcParams.update({'font.family': 'times new roman', 'font.size': 20})
+mpl.rcParams.update({'font.family': 'times new roman', 'font.size': 20})
+data = RigidBlock(loma_prieta)
+data.downslope_jibson(0.25)
+#plot_classic(data)
 
-# loma_prieta = csv_time_hist('D:/Users/donal/Documents/Python/SlidingBlock/Records/Loma Prieta - LGP-000 - 0.005s - 0.966g.csv')
-# data = RigidBlock(loma_prieta)
-# data.downslope_jibson(0.25)
-# plot_classic(data)
-
-# slammer_results = 'D:/Users/donal/Documents/Python/SlidingBlock/Records/pySLAMMER_motion_sample_results.csv'
-# data_location = 'D:/Users/donal/Documents/Python/SlidingBlock/Records/Record Test Set'
+slammer_results = 'test/Unmodified Data/pySLAMMER_motion_sample_results.csv'
+data_location = 'tests/Ground Motion Test Set'
 # ground_motion_comp(slammer_results, data_location)
