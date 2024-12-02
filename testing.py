@@ -190,7 +190,7 @@ def analytical_test(src_dir: str, write: bool=False, manual: bool=False, method:
     plt.show()
 
 
-def ground_motion_comp(slam_dir: str, data_dir: str):
+def ground_motion_comp(slam_dir: str, data_dir: str, method: str='jibson'):
     # Open the pySLAMMER results file and read the data.
     file = open(slam_dir)
     if file is None:
@@ -231,11 +231,17 @@ def ground_motion_comp(slam_dir: str, data_dir: str):
         data.name = filename
         data.station = slammer_results[idx[0]].station
         # Calculate normal dispalcement.
-        sba.downslope_jibson(slammer_results[idx[0]].k_y)
+        if method == 'jibson':
+            sba.downslope_jibson(slammer_results[idx[0]].k_y)
+        elif method == 'dgr':
+            sba.downslope_dgr(slammer_results[idx[0]].k_y)
         data.rigid_normal = sba.total_disp
         # Calculate inverse displacement.
         sba.invert()
-        sba.downslope_jibson(slammer_results[idx[0]].k_y)
+        if method == 'jibson':
+            sba.downslope_jibson(slammer_results[idx[0]].k_y)
+        elif method == 'dgr':
+            sba.downslope_dgr(slammer_results[idx[0]].k_y)
         data.rigid_inverse = sba.total_disp
         # Calculate average displacement.
         data.average()
@@ -262,6 +268,7 @@ def ground_motion_comp(slam_dir: str, data_dir: str):
     plt.subplots_adjust(bottom=0.3)
     plt.title('Rigid Block Displacement Comparison Results')
     plt.ylabel('Displacement Ratio (d/$\mathregular{d_{SLAMMER}}$)')
+    plt.ylim(0.86, 1.01)
     plt.xlabel('Earthquake Record')
     plt.legend()
     plt.show()
@@ -270,16 +277,17 @@ def ground_motion_comp(slam_dir: str, data_dir: str):
 
 
 harmonic_solutions = "tests/Trimmed Data/harmonic_errors.csv"
-loma_prieta = csv_time_hist("tests/Trimmed Data/Loma_Prieta_1989_HSP-000.csv")
+loma_prieta = csv_time_hist("tests/Ground Motion Test Set/Loma_Prieta_1989_HSP-000.csv")
 
 mpl.rcParams.update({'font.family': 'times new roman', 'font.size': 12})
-analytical_test(harmonic_solutions, manual=True)
+# analytical_test(harmonic_solutions, manual=True)
 
 mpl.rcParams.update({'font.family': 'times new roman', 'font.size': 20})
 data = RigidBlock(loma_prieta)
 data.downslope_jibson(0.25)
 #plot_classic(data)
 
-slammer_results = 'test/Unmodified Data/pySLAMMER_motion_sample_results.csv'
+mpl.rcParams.update({'font.family': 'times new roman', 'font.size': 12})
+slammer_results = 'tests/Unmodified Data/pySLAMMER_motion_sample_results.csv'
 data_location = 'tests/Ground Motion Test Set'
-# ground_motion_comp(slammer_results, data_location)
+ground_motion_comp(slammer_results, data_location, method='dgr')
